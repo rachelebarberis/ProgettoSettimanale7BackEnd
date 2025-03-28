@@ -15,7 +15,7 @@ namespace ProgettoSettimanale7BackEnd.Models
         public string UserId { get; set; }
 
         [Required]
-        public DateOnly DataAcquisto { get; set; }
+        public DateTime DataAcquisto { get; set; }
 
         public  Evento? Evento { get; set; }
         public  ApplicationUser? ApplicationUser { get; set; }

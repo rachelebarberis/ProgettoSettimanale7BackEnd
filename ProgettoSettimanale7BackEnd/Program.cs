@@ -123,6 +123,7 @@ try
     builder.Services.AddScoped<RoleManager<ApplicationRole>>();
     builder.Services.AddScoped<ArtistaService>();
     builder.Services.AddScoped<EventoService>();
+    builder.Services.AddScoped<BigliettoService>();
 
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
