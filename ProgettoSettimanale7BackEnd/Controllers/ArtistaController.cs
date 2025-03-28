@@ -14,68 +14,64 @@ namespace ProgettoSettimanale7BackEnd.Controllers
     [ApiController]
     public class ArtistaController : ControllerBase
     {
-      
-        
-            private readonly ArtistaService _artistaService;
-            private readonly ILogger<ArtistaController> _logger;
+        private readonly ArtistaService _artistaService;
+        private readonly ILogger<ArtistaController> _logger;
+        private readonly ApplicationDbContext _context;
 
-            private readonly ApplicationDbContext _context;
+        public ArtistaController(ArtistaService artistaService, ILogger<ArtistaController> logger, ApplicationDbContext context)
+        {
+            _artistaService = artistaService;
+            _logger = logger;
+            _context = context;
+        }
 
-            public ArtistaController(ArtistaService artistaService, ILogger<ArtistaController> logger, ApplicationDbContext context)
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Create([FromBody] CreateArtistaRequestDto createArtistaRequestDto)
+        {
+            try
             {
-                _artistaService = artistaService;
-                _logger = logger;
-                _context = context;
-            }
+                var newArtista = new Artista()
+                {
+                    Nome = createArtistaRequestDto.Nome,
+                    Genere = createArtistaRequestDto.Genere,
+                    Biografia = createArtistaRequestDto.Biografia,
+                };
 
-            [HttpPost]
-            public async Task<IActionResult> Create([FromBody] CreateArtistaRequestDto createArtistaRequestDto)
+                var result = await _artistaService.CreateArtistaAsync(newArtista);
+
+                return result
+                    ? Ok(new CreateArtistaResponseDto() { Message = "Artist created!" })
+                    : BadRequest(new CreateArtistaResponseDto() { Message = "Something went wrong!" });
+            }
+            catch (Exception ex)
             {
-                try
-                {
-                    var newArtista = new Artista()
-                    {
-                        Nome = createArtistaRequestDto.Nome,
-                        Genere = createArtistaRequestDto.Genere,
-                        Biografia = createArtistaRequestDto.Biografia,
-
-                    };
-
-                    var result = await _artistaService.CreateArtistaAsync(newArtista);
-
-                    return result ? Ok(new CreateArtistaResponseDto() { Message = "Artist created!" }) : BadRequest(new CreateArtistaResponseDto() { Message = "Something went wrong!" });
-                }
-                catch (Exception ex)
-                {
-                    return StatusCode(500, ex.Message);
-
-                }
+                return StatusCode(500, ex.Message);
             }
+        }
 
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            var result = await _artistaService.GetArtistiAsync();
 
-
-            [HttpGet]
-       
-            public async Task<IActionResult> GetAll()
+            List<ArtistaDto> responseDto = result.Select(r => new ArtistaDto()
             {
-                var result = await _artistaService.GetArtistiAsync();
+                ArtistaId = r.ArtistaId,
+                Nome = r.Nome,
+                Genere = r.Genere,
+                Biografia = r.Biografia,
+            }).ToList();
 
-                List<ArtistaDto> responseDto = result.Select(r => new ArtistaDto()
-                {
-                    ArtistaId = r.ArtistaId,
-                    Nome = r.Nome,
-                    Genere = r.Genere,
-                    Biografia = r.Biografia,
+            _logger.LogInformation($"Requesting artists info: {JsonSerializer.Serialize(responseDto, new JsonSerializerOptions() { WriteIndented = true })}");
 
-                }).ToList();
-
-
-                _logger.LogInformation($"Requesting artists info: {JsonSerializer.Serialize(responseDto, new JsonSerializerOptions() { WriteIndented = true })}");
-
-                return result != null ? Ok(new { message = "Artist found", artist = responseDto }) : BadRequest(new { message = "Something went wrong" });
-            }
+            return result != null
+                ? Ok(new { message = "Artist found", artist = responseDto })
+                : BadRequest(new { message = "Something went wrong" });
+        }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateArtistaRequestDto updateArtistaRequestDto)
         {
             try
@@ -86,7 +82,6 @@ namespace ProgettoSettimanale7BackEnd.Controllers
                     return NotFound(new { message = "Artista non trovato." });
                 }
 
-            
                 artista.Nome = updateArtistaRequestDto.Nome;
                 artista.Genere = updateArtistaRequestDto.Genere;
                 artista.Biografia = updateArtistaRequestDto.Biografia;
@@ -103,6 +98,7 @@ namespace ProgettoSettimanale7BackEnd.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -123,10 +119,5 @@ namespace ProgettoSettimanale7BackEnd.Controllers
                 return StatusCode(500, new { message = "Errore interno", error = ex.Message });
             }
         }
-
-
     }
 }
-
-
-

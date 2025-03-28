@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProgettoSettimanale7BackEnd.Data;
 using ProgettoSettimanale7BackEnd.DTOs.Biglietto;
 using ProgettoSettimanale7BackEnd.Models;
 using ProgettoSettimanale7BackEnd.Services;
+using System.Security.Claims;
 
 namespace ProgettoSettimanale7BackEnd.Controllers
 {
@@ -21,6 +23,7 @@ namespace ProgettoSettimanale7BackEnd.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "User")]
         public async Task<IActionResult> Create([FromBody] CreateBigliettoRequestDto createBigliettoRequestDto)
         {
             try
@@ -57,13 +60,27 @@ namespace ProgettoSettimanale7BackEnd.Controllers
         }
 
         [HttpGet]
+        [Authorize] 
         public async Task<IActionResult> GetAll()
         {
             try
             {
-                var result = await _bigliettoService.GetBigliettoAsync();
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var userRole = User.FindFirstValue(ClaimTypes.Role);
 
-                if (result == null || !result.Any())
+                IQueryable<Biglietto> query = _context.Biglietti
+                    .Include(b => b.ApplicationUser)
+                    .Include(b => b.Evento);
+
+                
+                if (userRole == "User")
+                {
+                    query = query.Where(b => b.UserId == userId);
+                }
+
+                var result = await query.ToListAsync();
+
+                if (!result.Any())
                 {
                     return NotFound(new { message = "Nessun biglietto trovato." });
                 }
@@ -86,7 +103,9 @@ namespace ProgettoSettimanale7BackEnd.Controllers
                 return StatusCode(500, new { message = "Errore interno", error = ex.Message });
             }
         }
+
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")] 
         public async Task<IActionResult> Update(int id, [FromBody] UpdateBigliettoRequestDto updateBigliettoRequestDto)
         {
             try
@@ -97,21 +116,18 @@ namespace ProgettoSettimanale7BackEnd.Controllers
                     return NotFound(new { message = "Biglietto non trovato." });
                 }
 
-          
                 var user = await _context.Users.FindAsync(updateBigliettoRequestDto.UserId);
                 if (user == null)
                 {
                     return BadRequest(new { message = "Utente non trovato." });
                 }
 
-                // Verifica se l'evento esiste
                 var evento = await _context.Eventi.FindAsync(updateBigliettoRequestDto.EventoId);
                 if (evento == null)
                 {
                     return BadRequest(new { message = "Evento non trovato." });
                 }
 
-               
                 biglietto.UserId = updateBigliettoRequestDto.UserId;
                 biglietto.EventoId = updateBigliettoRequestDto.EventoId;
                 biglietto.DataAcquisto = updateBigliettoRequestDto.DataAcquisto;
@@ -126,7 +142,9 @@ namespace ProgettoSettimanale7BackEnd.Controllers
                 return StatusCode(500, new { message = "Errore interno", error = ex.Message });
             }
         }
+
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")] 
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -147,6 +165,5 @@ namespace ProgettoSettimanale7BackEnd.Controllers
                 return StatusCode(500, new { message = "Errore interno", error = ex.Message });
             }
         }
-
     }
 }

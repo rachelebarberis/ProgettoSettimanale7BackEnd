@@ -1,15 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using System.Text.Json;
-
 using Microsoft.AspNetCore.Mvc;
 using ProgettoSettimanale7BackEnd.Data;
-
 using ProgettoSettimanale7BackEnd.DTOs.Evento;
 using ProgettoSettimanale7BackEnd.DTOs.Artista;
 using ProgettoSettimanale7BackEnd.Models;
 using ProgettoSettimanale7BackEnd.Services;
-
-
+using System.Linq;
 
 namespace ProgettoSettimanale7BackEnd.Controllers
 {
@@ -17,10 +13,8 @@ namespace ProgettoSettimanale7BackEnd.Controllers
     [ApiController]
     public class EventoController : ControllerBase
     {
-
         private readonly EventoService _eventoService;
         private readonly ILogger<EventoController> _logger;
-
         private readonly ApplicationDbContext _context;
 
         public EventoController(EventoService eventoService, ILogger<EventoController> logger, ApplicationDbContext context)
@@ -31,11 +25,11 @@ namespace ProgettoSettimanale7BackEnd.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")] 
         public async Task<IActionResult> Create([FromBody] CreateEventoRequestDto createEventoRequestDto)
         {
             try
             {
-
                 var artista = await _context.Artisti.FindAsync(createEventoRequestDto.ArtistaId);
                 if (artista == null)
                 {
@@ -63,23 +57,19 @@ namespace ProgettoSettimanale7BackEnd.Controllers
             }
         }
 
-
         [HttpGet]
 
         public async Task<IActionResult> GetAll()
         {
             try
             {
-             
                 var result = await _eventoService.GetEventoAsync();
 
-             
                 if (result == null || !result.Any())
                 {
                     return NotFound(new { message = "Nessun evento trovato." });
                 }
 
-          
                 var responseDto = result.Select(r => new EventoDto()
                 {
                     EventoId = r.EventoId,
@@ -97,11 +87,13 @@ namespace ProgettoSettimanale7BackEnd.Controllers
             }
             catch (Exception ex)
             {
-              
                 return StatusCode(500, new { message = "Errore interno", error = ex.Message });
             }
         }
+
+       
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")] 
         public async Task<IActionResult> Update(int id, [FromBody] UpdateEventoRequestDto updateEventoRequestDto)
         {
             try
@@ -112,14 +104,12 @@ namespace ProgettoSettimanale7BackEnd.Controllers
                     return NotFound(new { message = "Evento non trovato." });
                 }
 
-                // Verifica se l'Artista esiste
                 var artista = await _context.Artisti.FindAsync(updateEventoRequestDto.ArtistaId);
                 if (artista == null)
                 {
                     return BadRequest(new { message = "Artista associato non trovato." });
                 }
 
-                // Aggiorna i campi
                 evento.Titolo = updateEventoRequestDto.Titolo;
                 evento.Data = updateEventoRequestDto.Data;
                 evento.Luogo = updateEventoRequestDto.Luogo;
@@ -138,6 +128,7 @@ namespace ProgettoSettimanale7BackEnd.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")] 
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -158,8 +149,5 @@ namespace ProgettoSettimanale7BackEnd.Controllers
                 return StatusCode(500, new { message = "Errore interno", error = ex.Message });
             }
         }
-
     }
 }
-
-
