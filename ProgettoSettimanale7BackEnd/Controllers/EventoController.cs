@@ -101,6 +101,63 @@ namespace ProgettoSettimanale7BackEnd.Controllers
                 return StatusCode(500, new { message = "Errore interno", error = ex.Message });
             }
         }
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateEventoRequestDto updateEventoRequestDto)
+        {
+            try
+            {
+                var evento = await _context.Eventi.FindAsync(id);
+                if (evento == null)
+                {
+                    return NotFound(new { message = "Evento non trovato." });
+                }
+
+                // Verifica se l'Artista esiste
+                var artista = await _context.Artisti.FindAsync(updateEventoRequestDto.ArtistaId);
+                if (artista == null)
+                {
+                    return BadRequest(new { message = "Artista associato non trovato." });
+                }
+
+                // Aggiorna i campi
+                evento.Titolo = updateEventoRequestDto.Titolo;
+                evento.Data = updateEventoRequestDto.Data;
+                evento.Luogo = updateEventoRequestDto.Luogo;
+                evento.ArtistaId = updateEventoRequestDto.ArtistaId;
+                evento.Artista = artista;
+
+                _context.Eventi.Update(evento);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Evento aggiornato con successo!" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Errore interno", error = ex.Message });
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                var evento = await _context.Eventi.FindAsync(id);
+                if (evento == null)
+                {
+                    return NotFound(new { message = "Evento non trovato." });
+                }
+
+                _context.Eventi.Remove(evento);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Evento eliminato con successo!" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Errore interno", error = ex.Message });
+            }
+        }
 
     }
 }

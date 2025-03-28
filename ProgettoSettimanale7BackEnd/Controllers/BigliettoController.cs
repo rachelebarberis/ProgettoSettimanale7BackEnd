@@ -86,5 +86,67 @@ namespace ProgettoSettimanale7BackEnd.Controllers
                 return StatusCode(500, new { message = "Errore interno", error = ex.Message });
             }
         }
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateBigliettoRequestDto updateBigliettoRequestDto)
+        {
+            try
+            {
+                var biglietto = await _context.Biglietti.FindAsync(id);
+                if (biglietto == null)
+                {
+                    return NotFound(new { message = "Biglietto non trovato." });
+                }
+
+          
+                var user = await _context.Users.FindAsync(updateBigliettoRequestDto.UserId);
+                if (user == null)
+                {
+                    return BadRequest(new { message = "Utente non trovato." });
+                }
+
+                // Verifica se l'evento esiste
+                var evento = await _context.Eventi.FindAsync(updateBigliettoRequestDto.EventoId);
+                if (evento == null)
+                {
+                    return BadRequest(new { message = "Evento non trovato." });
+                }
+
+               
+                biglietto.UserId = updateBigliettoRequestDto.UserId;
+                biglietto.EventoId = updateBigliettoRequestDto.EventoId;
+                biglietto.DataAcquisto = updateBigliettoRequestDto.DataAcquisto;
+
+                _context.Biglietti.Update(biglietto);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Biglietto aggiornato con successo!" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Errore interno", error = ex.Message });
+            }
+        }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                var biglietto = await _context.Biglietti.FindAsync(id);
+                if (biglietto == null)
+                {
+                    return NotFound(new { message = "Biglietto non trovato." });
+                }
+
+                _context.Biglietti.Remove(biglietto);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Biglietto eliminato con successo!" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Errore interno", error = ex.Message });
+            }
+        }
+
     }
 }

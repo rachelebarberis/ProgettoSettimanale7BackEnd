@@ -55,7 +55,7 @@ namespace ProgettoSettimanale7BackEnd.Controllers
 
 
             [HttpGet]
-            [Authorize(Roles = "Admin")]
+       
             public async Task<IActionResult> GetAll()
             {
                 var result = await _artistaService.GetArtistiAsync();
@@ -75,9 +75,58 @@ namespace ProgettoSettimanale7BackEnd.Controllers
                 return result != null ? Ok(new { message = "Artist found", artist = responseDto }) : BadRequest(new { message = "Something went wrong" });
             }
 
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateArtistaRequestDto updateArtistaRequestDto)
+        {
+            try
+            {
+                var artista = await _context.Artisti.FindAsync(id);
+                if (artista == null)
+                {
+                    return NotFound(new { message = "Artista non trovato." });
+                }
 
+            
+                artista.Nome = updateArtistaRequestDto.Nome;
+                artista.Genere = updateArtistaRequestDto.Genere;
+                artista.Biografia = updateArtistaRequestDto.Biografia;
+
+                _context.Artisti.Update(artista);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Artista aggiornato con successo!", artista });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Errore interno", error = ex.Message });
+            }
         }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                var artista = await _context.Artisti.FindAsync(id);
+                if (artista == null)
+                {
+                    return NotFound(new { message = "Artista non trovato." });
+                }
+
+                _context.Artisti.Remove(artista);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Artista eliminato con successo!" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Errore interno", error = ex.Message });
+            }
+        }
+
+
     }
+}
 
 
 

@@ -2,9 +2,8 @@
 
 namespace ProgettoSettimanale7BackEnd.DTOs.Evento
 {
-    public class CreateEventoRequestDto
+    public class UpdateEventoRequestDto
     {
-
         [Required]
         public required string Titolo { get; set; }
 
@@ -20,6 +19,4 @@ namespace ProgettoSettimanale7BackEnd.DTOs.Evento
         [Required]
         public required string Nome { get; set; }
     }
-
-
 }
