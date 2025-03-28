@@ -60,7 +60,8 @@ namespace ProgettoSettimanale7BackEnd.Controllers
         }
 
         [HttpGet]
-        [Authorize] 
+        [Authorize(Roles = "Admin")]
+
         public async Task<IActionResult> GetAll()
         {
             try
